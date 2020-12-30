@@ -1,0 +1,5 @@
+certifi==2020.12.5
+click==7.1.2
+openttd-helpers==1.0.1
+sentry-sdk==0.19.5
+urllib3==1.26.2
