@@ -4,6 +4,7 @@ import struct
 import lzma
 import zlib
 
+from collections import defaultdict
 from openttd_helpers import click_helper
 
 
@@ -176,43 +177,63 @@ def main(files):
         if key == "filename":
             continue
 
+        detect_type = None
+        for analysis in analysis_all:
+            if key not in analysis:
+                continue
+            t = type(analysis[key])
+            if detect_type is None or detect_type == t:
+                detect_type = t
+            else:
+                detect_type = None
+                break
+
+        if detect_type is None:
+            raise Exception(f"Failed to detect common type for {key}; this is an implementation bug")
+
+        if detect_type == int:
+            default_value = 0
+        elif detect_type == str:
+            default_value = ""
+        elif detect_type == bytes:
+            default_value = b""
+        else:
+            raise Exception(f"No default value implemented for type {str(detect_type)}")
+
+        last_value = None
+        slot = None
+        values = defaultdict(list)
+        for analysis in sorted(analysis_all, key=lambda x: x.get(key, default_value)):
+            if key not in analysis:
+                value = "unknown"
+            else:
+                value = analysis[key]
+
+            if last_value != value:
+                slot = value
+                last_value = value
+
+            values[slot].append(analysis['filename'])
+
         with open(f"metadata/{key}.yaml", "w") as fp:
             fp.write(f"{key}:\n")
 
-            detect_type = None
-            for analysis in analysis_all:
-                if key not in analysis:
-                    continue
-                t = type(analysis[key])
-                if detect_type is None or detect_type == t:
-                    detect_type = t
-                else:
-                    detect_type = None
-                    break
+            for slot, filenames in values.items():
+                fp.write(f"  {slot}:\n")
+                for filename in filenames:
+                    fp.write(f"  - {filename}\n")
 
-            if detect_type is None:
-                raise Exception(f"Failed to detect common type for {key}; this is an implementation bug")
+        with open(f"html/{key}.html", "w") as fp:
+            fp.write("<html><body>\n")
+            fp.write(f"<h1>By {key}</h1>\n")
 
-            if detect_type == int:
-                default_value = 0
-            elif detect_type == str:
-                default_value = ""
-            elif detect_type == bytes:
-                default_value = b""
-            else:
-                raise Exception(f"No default value implemented for type {str(detect_type)}")
+            for slot, filenames in values.items():
+                fp.write(f"<h2>{slot}</h2>\n<ul>\n")
+                for filename in filenames:
+                    fp.write(f'<li><a href="https://github.com/TrueBrain/OpenTTD-savegames/raw/master/savegames/{filename}">{filename}</a></li>\n')
+                fp.write("</ul>\n")
 
-            last_value = None
-            for analysis in sorted(analysis_all, key=lambda x: x.get(key, default_value)):
-                if key not in analysis:
-                    value = "unknown"
-                else:
-                    value = analysis[key]
-
-                if last_value != value:
-                    fp.write(f"  {value}:\n")
-                    last_value = value
-                fp.write(f"  - {analysis['filename']}\n")
+            fp.write("</body></html>\n")
 
 
 if __name__ == "__main__":
