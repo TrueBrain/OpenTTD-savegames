@@ -213,7 +213,7 @@ def main(files):
                 slot = value
                 last_value = value
 
-            values[slot].append(analysis['filename'])
+            values[slot].append(analysis["filename"])
 
         with open(f"metadata/{key}.yaml", "w") as fp:
             fp.write(f"{key}:\n")
@@ -230,10 +230,25 @@ def main(files):
             for slot, filenames in values.items():
                 fp.write(f"<h2>{slot}</h2>\n<ul>\n")
                 for filename in filenames:
-                    fp.write(f'<li><a href="https://github.com/TrueBrain/OpenTTD-savegames/raw/master/savegames/{filename}">{filename}</a></li>\n')
+                    fp.write(
+                        f'<li><a href="https://github.com/TrueBrain/OpenTTD-savegames/raw/master/savegames/{filename}">{filename}</a></li>\n'
+                    )
                 fp.write("</ul>\n")
 
             fp.write("</body></html>\n")
+
+    with open("docs/index.html", "w") as fp:
+        fp.write("<html><body>\n")
+        fp.write("<h1>OpenTTD Savegames</h1>")
+        fp.write("<ul>\n")
+
+        for key in sorted(keys):
+            if key == "filename":
+                continue
+            fp.write(f'<li><a href="{key}.html">by {key}</a></li>\n')
+
+        fp.write("</ul>\n")
+        fp.write("</body></html>\n")
 
 
 if __name__ == "__main__":
