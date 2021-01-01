@@ -223,7 +223,7 @@ def main(files):
                 for filename in filenames:
                     fp.write(f"  - {filename}\n")
 
-        with open(f"html/{key}.html", "w") as fp:
+        with open(f"docs/{key}.html", "w") as fp:
             fp.write("<html><body>\n")
             fp.write(f"<h1>By {key}</h1>\n")
 
